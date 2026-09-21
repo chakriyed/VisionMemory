@@ -23,23 +23,37 @@ class ObjectDetector:
         self._current_classes: list[str] = []
         self._lock = threading.Lock()
         self._load_error: Optional[str] = None
+        self._load_started = False
 
-    def _ensure_loaded(self) -> None:
-        if self._model is not None or self._load_error is not None:
+    def start_loading(self) -> None:
+        """Kicks off model loading (incl. first-run weights download) on a background
+        thread. Must never be called from a request-handling thread — a slow or
+        stalled download would otherwise block that request indefinitely."""
+        if self._load_started:
             return
+        self._load_started = True
+        threading.Thread(target=self._load, name="detector-load", daemon=True).start()
+
+    def _load(self) -> None:
         try:
-            from ultralytics import YOLOWorld  # imported lazily: slow + needs weights
+            from ultralytics import YOLOWorld  # heavy import: torch + weights download
 
             logger.info("Loading YOLO-World model %s (first run downloads weights)...", self._model_name)
-            self._model = YOLOWorld(self._model_name)
+            model = YOLOWorld(self._model_name)
+            with self._lock:
+                self._model = model
         except Exception as exc:  # noqa: BLE001
             self._load_error = str(exc)
             logger.exception("Failed to load YOLO-World model")
 
     @property
     def ready(self) -> bool:
-        self._ensure_loaded()
+        """Non-blocking: reflects current state without triggering or waiting on load."""
         return self._model is not None
+
+    @property
+    def loading(self) -> bool:
+        return self._load_started and self._model is None and self._load_error is None
 
     @property
     def load_error(self) -> Optional[str]:
@@ -58,18 +72,22 @@ class ObjectDetector:
         if not class_names:
             return []
 
-        self._ensure_loaded()
         if self._model is None:
-            raise RuntimeError(f"Detector unavailable: {self._load_error}")
+            reason = self._load_error or ("still loading" if self._load_started else "not started")
+            raise RuntimeError(f"Detector unavailable: {reason}")
 
-        with self._lock:
-            self._set_classes(class_names)
-            results = self._model.track(
-                frame,
-                persist=True,
-                conf=config.DETECTION_CONF_THRESHOLD,
-                verbose=False,
-            )
+        try:
+            with self._lock:
+                self._set_classes(class_names)
+                results = self._model.track(
+                    frame,
+                    persist=True,
+                    conf=config.DETECTION_CONF_THRESHOLD,
+                    verbose=False,
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Detection/tracking failed")
+            raise RuntimeError(f"Detection failed: {exc}") from exc
 
         if not results:
             return []

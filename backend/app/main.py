@@ -30,6 +30,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 @app.on_event("startup")
 def on_startup() -> None:
     db.init_db()
+    detector.start_loading()
 
 
 def to_url(path_str: Optional[str]) -> Optional[str]:
@@ -60,6 +61,7 @@ def health() -> dict:
     return {
         "status": "ok",
         "detector_ready": detector.ready,
+        "detector_loading": detector.loading,
         "detector_error": detector.load_error,
         "anthropic_configured": bool(config.ANTHROPIC_API_KEY),
     }

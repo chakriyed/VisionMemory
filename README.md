@@ -94,8 +94,16 @@ Then open **http://localhost:8000** in a browser, allow camera access, and:
 
 ### Notes
 
-- First run downloads the YOLO-World weights (`yolov8s-world.pt`, a few tens
-  of MB) from Ultralytics — needs internet access once.
+- First run needs internet access to download two sets of weights the first
+  time each is used: the YOLO-World checkpoint (`yolov8s-world.pt`, tens of
+  MB, fetched by `ultralytics` on server startup) and, the first time you
+  register or detect any object, OpenAI's CLIP `ViT-B/32` text encoder
+  (~340MB, fetched by the `clip` package to `~/.cache/clip`) — YOLO-World
+  uses it to turn your typed object names into detection prompts. If you're
+  behind a restrictive proxy/firewall, that second download can fail with a
+  TLS error; `/api/frame` will return a clear 503 with the underlying error
+  rather than hanging, and `/api/health` reports `detector_ready` /
+  `detector_loading` / `detector_error` so the UI can show what's going on.
 - Detection quality for small/uncommon objects (like keys or a USB drive) can
   be inconsistent since YOLO-World is zero-shot / not fine-tuned on your
   specific items. Registering with a clear, well-lit reference shot and
