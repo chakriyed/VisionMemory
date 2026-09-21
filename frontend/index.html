@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VisionMemory</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>VisionMemory</h1>
+    <p class="subtitle">Your camera remembers where things were last seen.</p>
+    <div id="status-bar" class="status-bar">Checking backend status…</div>
+  </header>
+
+  <main>
+    <section class="panel camera-panel">
+      <h2>Camera</h2>
+      <div class="video-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
+      <div class="controls">
+        <button id="start-camera">Start Camera</button>
+        <button id="toggle-watch" disabled>Start Watching</button>
+        <span id="watch-indicator" class="indicator"></span>
+      </div>
+      <canvas id="capture-canvas" hidden></canvas>
+    </section>
+
+    <section class="panel register-panel">
+      <h2>Register an Object</h2>
+      <p class="hint">Point the camera at the object, then capture it and give it a name.</p>
+      <input id="object-name" type="text" placeholder="e.g. headphones, wallet, keys, usb drive" />
+      <button id="register-btn" disabled>Capture &amp; Register</button>
+      <div id="register-status" class="status-line"></div>
+
+      <h3>Registered Objects</h3>
+      <ul id="object-list" class="object-list"></ul>
+    </section>
+
+    <section class="panel query-panel">
+      <h2>Ask VisionMemory</h2>
+      <div class="query-row">
+        <input id="question" type="text" placeholder='e.g. "Where did I last see my headphones?"' />
+        <button id="ask-btn">Ask</button>
+      </div>
+      <div id="query-answer" class="query-answer"></div>
+      <div id="query-evidence" class="evidence-grid"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

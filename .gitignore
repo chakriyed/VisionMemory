@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# runtime data (frames, sqlite db, reference images)
+data/frames/*
+data/references/*
+data/*.db
+!data/frames/.gitkeep
+!data/references/.gitkeep
+
+# downloaded model weights
+*.pt
+
+.env
+.DS_Store
+.claude/
