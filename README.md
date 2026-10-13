@@ -114,3 +114,38 @@ check the box before trusting a saved last-seen record.
 This version recognizes categories, not a particular person's wallet or watch.
 The next milestone is object registration: capturing several reference views
 and matching detections against those references.
+
+## Detect objects in a photo
+
+Photo mode scans all 601 categories in the Open Images detector, plus text
+prompts for keys, wallets, pencils, charging cables, phone chargers, and earbuds.
+It runs a full-image pass and overlapping crop passes on every photo. No camera
+or graphical window is required.
+
+```bash
+python -m vision_memory --image /path/to/items.jpg --model yoloe-26s-seg.pt \
+  --image-size 960 --tile-image-size 1280 --confidence 0.25
+```
+
+Results are saved in `data/image_results/`: an annotated JPEG with labels and
+boxes, and JSON containing every detected instance (including repeated items of
+the same category), confidence scores, and bounding boxes in original pixels.
+Use `--output-dir` to choose another destination. Results with the same input
+stem overwrite earlier results in that directory. Photo mode leaves webcam
+last-seen memory untouched.
+
+To focus on particular objects or add a category outside the trained vocabulary:
+
+```bash
+python -m vision_memory --image /path/to/items.jpg \
+  --classes "pen,wristwatch,phone,wallet,set of keys" --model yoloe-26s-seg.pt
+```
+
+Trained categories use the Open Images model; other names use text prompts.
+The larger local YOLOE small model is optional; it consumes more compute than
+the default nano model. Broad category coverage does not guarantee that every
+item is detected or labeled correctly. Tiny, occluded, unusual, and ambiguous
+objects may be missed or misclassified. Scores are model confidence, not
+measured accuracy. Lowering the threshold may recover objects but adds false
+positives. Evaluate representative photos with manually checked labels and boxes
+before relying on results; photo accuracy has not yet been benchmarked.

@@ -1,4 +1,4 @@
-ultralytics>=8.4.0,<9
+ultralytics>=8.4.175,<9
 opencv-python>=4.10,<5
 numpy>=1.26,<3
 lap>=0.5.12,<1

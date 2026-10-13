@@ -31,12 +31,14 @@ def parse_args() -> argparse.Namespace:
         description="Detect and remember everyday objects using a webcam."
     )
     parser.add_argument("--camera", type=int, default=0, help="Webcam index")
+    parser.add_argument("--image", type=Path, help="Detect objects in a photo instead of using the webcam")
+    parser.add_argument("--output-dir", type=Path, default=Path("data/image_results"))
     parser.add_argument("--camera-width", type=int, default=1920)
     parser.add_argument("--camera-height", type=int, default=1080)
     parser.add_argument(
         "--classes",
-        default=",".join(DEFAULT_CLASSES),
-        help="Comma-separated object classes",
+        default=None,
+        help="Comma-separated targets; photo mode defaults to all trained categories",
     )
     parser.add_argument("--model", default="yoloe-26n-seg.pt")
     parser.add_argument(
@@ -125,7 +127,8 @@ def detections_from_result(result, label_map=None) -> List[Detection]:
 
 
 def predict_robust(
-    model, frame, args, device, class_ids=None, label_map=None, scan_tiles=True
+    model, frame, args, device, class_ids=None, label_map=None, scan_tiles=True,
+    merge=merge_detections,
 ):
     """Detect on the original frame and overlapping crops, then map to frame pixels."""
     options = {
@@ -139,7 +142,7 @@ def predict_robust(
 
     detections = detections_from_result(model.predict(frame, **options)[0], label_map)
     if not scan_tiles:
-        return merge_detections(detections)
+        return merge(detections)
     height, width = frame.shape[:2]
     enhanced = brighten_if_dark(frame)
     tile_options = {**options, "imgsz": args.tile_image_size}
@@ -156,7 +159,7 @@ def predict_robust(
                     source="tiled model",
                 )
             )
-    return merge_detections(detections)
+    return merge(detections)
 
 
 def draw_detections(frame, detections: Sequence[Detection]) -> None:
@@ -228,11 +231,26 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
 
 
 def run(args: argparse.Namespace) -> None:
+    from ultralytics.nn.modules import head
+    if not args.manual_pen and "26" in args.model and not hasattr(head, "YOLOESegment26"):
+        raise RuntimeError(
+            "This Ultralytics installation cannot load YOLOE-26 weights. "
+            "Run with the project environment: .venv/bin/python -m vision_memory ... "
+            "or upgrade this environment with: python -m pip install -r requirements.txt"
+        )
     if args.tile_interval < 1:
         raise ValueError("--tile-interval must be at least 1.")
     if args.image_size < 32 or args.tile_image_size < 32:
         raise ValueError("Inference image sizes must be at least 32.")
-    classes = ["pen"] if args.manual_pen else parse_classes(args.classes)
+    if not 0 < args.confidence <= 1:
+        raise ValueError("--confidence must be greater than 0 and at most 1.")
+    if args.image is not None:
+        if args.manual_pen:
+            raise ValueError("--manual-pen is only available with the webcam.")
+        from .photos import run_photo
+        run_photo(args)
+        return
+    classes = ["pen"] if args.manual_pen else parse_classes(args.classes or ",".join(DEFAULT_CLASSES))
     manual_label = "pen" if "pen" in classes else classes[0]
     open_images_model = None
     open_images_ids = []
