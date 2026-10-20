@@ -1,5 +1,6 @@
 """Photo detection with broad trained coverage and supplementary text targets."""
 from dataclasses import asdict
+from datetime import datetime
 import json
 
 import cv2
@@ -58,6 +59,7 @@ def run_photo(args):
         raise RuntimeError(f"Could not write annotated image: {image_path}")
     json_path.write_text(json.dumps({
         "input": str(args.image.resolve()), "width": width, "height": height,
+        "analyzed_at": datetime.now().astimezone().isoformat(),
         "bbox_format": "xyxy in original image pixels", "confidence_threshold": args.confidence,
         "models": [args.open_images_model] + ([args.model] if extra else []),
         "detections": [dict(instance_id=i, **asdict(d)) for i, d in enumerate(detections, 1)],

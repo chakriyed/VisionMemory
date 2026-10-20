@@ -28,7 +28,8 @@ COLORS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Detect and remember everyday objects using a webcam."
+        description="Detect everyday objects in photos or with a webcam.",
+        epilog="For scene questions: python -m vision_memory chat --help",
     )
     parser.add_argument("--camera", type=int, default=0, help="Webcam index")
     parser.add_argument("--image", type=Path, help="Detect objects in a photo instead of using the webcam")

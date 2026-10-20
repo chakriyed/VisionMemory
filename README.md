@@ -149,3 +149,78 @@ objects may be missed or misclassified. Scores are model confidence, not
 measured accuracy. Lowering the threshold may recover objects but adds false
 positives. Evaluate representative photos with manually checked labels and boxes
 before relying on results; photo accuracy has not yet been benchmarked.
+
+## Ask questions about objects with a local LLM
+
+The `chat` command reads saved photo detections and computes spatial relations
+before sending those facts to Ollama. It supports interactive follow-up questions
+and does not load the detection models again. It uses Ollama's `/api/chat`
+endpoint (https://docs.ollama.com/api/chat); no additional Python package is needed.
+Images are not sent to the LLM. By default, scene labels and coordinates go only
+to Ollama on localhost; changing `--llm-host` sends those facts to that host.
+
+Install/start Ollama, then download a model once:
+
+```bash
+ollama pull qwen2.5:7b
+# If Ollama is not already running, start it in another terminal:
+ollama serve
+```
+
+Chat about the existing photo result:
+
+```bash
+.venv/bin/python -m vision_memory chat \
+  --scene data/image_results/image_fc2abec0_detections.json
+```
+
+Example questions: “What is next to the wallet?”, “What is to the left of the
+phone?”, “How many pens are detected?” and “Where is pen #2?” Type `quit` to exit.
+Use `--llm-model NAME` for another installed model. Chat reads a fixed scene at
+startup; it does not monitor the camera or refresh files during the conversation.
+
+For movement, photograph the scene twice with the same camera position and
+framing. Use distinct filenames, such as `before.jpg` and `after.jpg`, and run
+photo detection on each. Then compare the resulting files:
+
+```bash
+.venv/bin/python -m vision_memory chat \
+  --scene data/image_results/after_detections.json \
+  --previous data/image_results/before_detections.json \
+  --fixed-camera --ask "Which items may have moved?"
+```
+
+Only use `--fixed-camera` when both photos have the same framing, zoom, and
+camera position. Otherwise, the assistant reports changed image positions,
+which could result from camera motion. A displacement must exceed 4% of the
+normalized image diagonal to count as a significant center change. A matching
+category appearing once in each photo is only a tentative identity match. When
+multiple instances share a category, the comparison reports ambiguous identity
+rather than claiming to know which physical item moved. A missing detection
+may be an occlusion or a detector miss; it does not prove removal.
+
+Spatial relations describe the image plane: left/right, above/below, overlapping
+boxes, and “next to” (non-overlapping boxes separated by at most 8% of the
+normalized image diagonal). They do not establish depth, physical contact, or
+support. Scene IDs such as `pen #2` are local to one photo. LLM answers remain
+subject to model errors; inspect the measured evidence with:
+
+```bash
+.venv/bin/python -m vision_memory chat \
+  --scene data/image_results/after_detections.json \
+  --previous data/image_results/before_detections.json --facts-only
+```
+
+One photo can answer spatial questions, but movement needs two observations.
+The existing webcam last-seen file stores one object per category rather than
+a complete simultaneous scene, so it cannot be used as a photo scene for chat.
+
+The first answer on a large scene can take longer while the model processes the
+scene. The default LLM timeout is 180 seconds; adjust it with `--llm-timeout`.
+The chat requests a 32K context window, so memory use rises with scene size.
+Very large scenes are rejected with a suggestion to use a focused `--classes`
+list rather than silently dropping facts from the prompt.
+
+Direct positive “what/which items are next to [one item]?” list questions use the
+measured neighbor lookup directly, preserving the complete list without an LLM
+omission. Broader questions, ambiguous references, and follow-ups go to Ollama.
