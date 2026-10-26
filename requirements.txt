@@ -1,0 +1,5 @@
+ultralytics>=8.4.175,<9
+opencv-python>=4.10,<5
+numpy>=1.26,<3
+lap>=0.5.12,<1
+clip @ git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40

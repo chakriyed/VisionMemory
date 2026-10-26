@@ -1,19 +1,23 @@
-__pycache__/
-*.pyc
 .venv/
 venv/
+__pycache__/
+*.py[cod]
 *.egg-info/
+.DS_Store
+.env
 
-# runtime data (frames, sqlite db, reference images)
+# runtime data (frames, sqlite db, reference images, evidence, diagnostics, state)
+data/*
+!data/frames/
+!data/references/
 data/frames/*
 data/references/*
-data/*.db
 !data/frames/.gitkeep
 !data/references/.gitkeep
 
 # downloaded model weights
 *.pt
+*.torchscript
+mobileclip*.ts
 
-.env
-.DS_Store
 .claude/
