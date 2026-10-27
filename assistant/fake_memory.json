@@ -1,0 +1,13 @@
+{
+  "events": [
+    {"object": "phone", "timestamp": "2026-10-26T16:05:44", "location": "living room sofa", "coordinates": [88, 410, 210, 500], "near": ["remote"]},
+    {"object": "wallet", "timestamp": "2026-10-26T14:30:02", "location": "kitchen counter", "coordinates": [300, 220, 400, 300], "near": ["phone", "keys"]},
+    {"object": "keys", "timestamp": "2026-10-26T18:12:09", "location": "front door hook", "coordinates": [20, 50, 60, 120], "near": []},
+    {"object": "phone", "timestamp": "2026-10-26T14:32:10", "location": "kitchen counter", "coordinates": [412, 230, 540, 310], "near": ["keys", "wallet"]},
+    {"object": "remote", "timestamp": "2026-10-26T16:05:40", "location": "living room sofa", "coordinates": [60, 420, 120, 480], "near": ["phone"]},
+    {"object": "wallet", "timestamp": "2026-10-26T19:40:21", "location": "bedroom nightstand", "coordinates": [310, 150, 360, 190], "near": []},
+    {"object": "headphones", "timestamp": "2026-10-26T09:15:00", "location": "bedroom desk", "coordinates": [150, 100, 260, 180], "near": ["laptop"]},
+    {"object": "keys", "timestamp": "2026-10-26T14:31:50", "location": "kitchen counter", "coordinates": [430, 225, 470, 260], "near": ["phone", "wallet"]},
+    {"object": "laptop", "timestamp": "2026-10-26T09:14:50", "location": "bedroom desk", "coordinates": [100, 90, 300, 220], "near": ["headphones"]}
+  ]
+}
